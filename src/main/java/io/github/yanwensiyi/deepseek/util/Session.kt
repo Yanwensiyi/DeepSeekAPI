@@ -5,7 +5,19 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.Duration
 
-class Session(val key: String, var prompt: Message, var limit: Int = 1000) {
+/**
+ * Session used to handle a sequence of messages
+ */
+class Session(
+    val key: String,
+    var prompt: Message,
+    var limit: Int = 1000,
+    var temperature: Float = 1.3f,
+    var maxTokens: Int = 1000,
+    var model: String = "deepseek-chat",
+    var assistantName: String? = null,
+    var userName: String? = null
+) {
     companion object {
         const val URL = "https://api.deepseek.com/chat/completions"
     }
@@ -14,9 +26,7 @@ class Session(val key: String, var prompt: Message, var limit: Int = 1000) {
       .readTimeout(Duration.ofSeconds(60))
       .build()
     val messages = ArrayDeque<Message>()
-    var temperature = 1.3f
-    var maxTokens = 1000
-    var model = "deepseek-chat"
+
     val length: Int
         get() {
             var l = 0
@@ -36,10 +46,9 @@ class Session(val key: String, var prompt: Message, var limit: Int = 1000) {
                     messages.removeFirst()
                 messages.map(Message::json).forEach(::put)
             }
-        }.run {
-            println(this)
-            toRequestBody()
-        }
+        }.toRequestBody()
+
+    fun getChatResult(msg: String) = getChatResult(Message.user(msg, userName))
 
     fun getChatResult(msg: Message): Result {
         messages += msg
@@ -52,7 +61,9 @@ class Session(val key: String, var prompt: Message, var limit: Int = 1000) {
         client.newCall(req).execute().use { resp ->
             val body = resp.body!!.string()
             val result = Result(body)
-            messages += result.message
+            messages += result.message.apply {
+                name = this@Session.assistantName
+            }
             return result
         }
     }

@@ -5,12 +5,16 @@ import org.json.JSONObject
 data class Message(
     val role: String,
     val content: String,
-    val name: String?
+    var name: String?
 ) {
     companion object {
+        @JvmStatic
         fun prompt(content: String, name: String? = null) = Message("system", content, name)
+        @JvmStatic
         fun user(content: String, name: String? = null) = Message("user", content, name)
+        @JvmStatic
         fun assistant(content: String, name: String? = null) = Message("assistant", content, name)
+        @JvmStatic
         fun tool(content: String, name: String? = null) = Message("tool", content, name)
     }
 
